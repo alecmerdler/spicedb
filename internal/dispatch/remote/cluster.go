@@ -8,11 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/authzed/authzed-go/pkg/requestmeta"
 	"github.com/authzed/consistent"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/authzed/spicedb/internal/dispatch"
@@ -139,7 +141,17 @@ type secondaryRespTuple[S responseMessage] struct {
 	resp        S
 }
 
+func withRequestID(ctx context.Context) context.Context {
+	requestID := metadata.ValueFromIncomingContext(ctx, string(requestmeta.RequestIDKey))
+	if len(requestID) == 1 {
+		ctx = metadata.AppendToOutgoingContext(ctx, string(requestmeta.RequestIDKey), requestID[0])
+	}
+
+	return ctx
+}
+
 func dispatchRequest[Q requestMessage, S responseMessage](ctx context.Context, cr *clusterDispatcher, reqKey string, req Q, handler func(context.Context, ClusterClient) (S, error)) (S, error) {
+	ctx = withRequestID(ctx)
 	withTimeout, cancelFn := context.WithTimeout(ctx, cr.dispatchOverallTimeout)
 	defer cancelFn()
 
