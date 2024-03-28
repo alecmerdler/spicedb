@@ -93,6 +93,8 @@ func AllWithExceptions(t *testing.T, tester DatastoreTester, except Categories) 
 	t.Run("TestSimple", func(t *testing.T) { SimpleTest(t, tester) })
 	t.Run("TestObjectIDs", func(t *testing.T) { ObjectIDsTest(t, tester) })
 	t.Run("TestDeleteRelationships", func(t *testing.T) { DeleteRelationshipsTest(t, tester) })
+	// FIXME(alecmerdler): This test fails due to bug...
+	t.Run("TestDeleteRelationshipsRepeatedWithLimit", func(t *testing.T) { DeleteRelationshipsRepeatedWithLimitTest(t, tester) })
 	t.Run("TestDeleteNonExistant", func(t *testing.T) { DeleteNotExistantTest(t, tester) })
 	t.Run("TestDeleteAlreadyDeleted", func(t *testing.T) { DeleteAlreadyDeletedTest(t, tester) })
 	t.Run("TestWriteDeleteWrite", func(t *testing.T) { WriteDeleteWriteTest(t, tester) })

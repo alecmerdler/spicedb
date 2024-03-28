@@ -987,6 +987,72 @@ func DeleteRelationshipsWithVariousFiltersTest(t *testing.T, tester DatastoreTes
 	}
 }
 
+func DeleteRelationshipsRepeatedWithLimitTest(t *testing.T, tester DatastoreTester) {
+	require := require.New(t)
+
+	rawDS, err := tester.New(0, veryLargeGCInterval, veryLargeGCWindow, 1)
+	require.NoError(err)
+
+	ds, _ := testfixtures.StandardDatastoreWithSchema(rawDS, require)
+	ctx := context.Background()
+
+	relationships := make([]*core.RelationTuple, 100)
+	for i := 0; i < 100; i++ {
+		relationships[i] = tuple.MustParse(fmt.Sprintf("document:%d#owner@user:first", i))
+	}
+
+	writeRelationships := func() error {
+		_, err := common.WriteTuples(ctx, ds, core.RelationTupleUpdate_CREATE, relationships...)
+		return err
+	}
+
+	deleteRelationships := func() error {
+		_, err := ds.ReadWriteTx(ctx, func(ctx context.Context, rwt datastore.ReadWriteTransaction) error {
+			delLimit := uint64(100)
+			_, err := rwt.DeleteRelationships(ctx, &v1.RelationshipFilter{
+				OptionalRelation: "owner",
+				OptionalSubjectFilter: &v1.SubjectFilter{
+					SubjectType:       "user",
+					OptionalSubjectId: "first",
+				},
+			}, options.WithDeleteLimit(&delLimit))
+			return err
+		})
+		return err
+	}
+
+	confirmRelationshipsDeleted := func() {
+		// Read the updated relationships and ensure no matching relationships are found.
+		headRev, err := ds.HeadRevision(ctx)
+		require.NoError(err)
+
+		reader := ds.SnapshotReader(headRev)
+		iter, err := reader.QueryRelationships(ctx, datastore.RelationshipsFilter{})
+		require.NoError(err)
+		t.Cleanup(iter.Close)
+
+		found := iter.Next()
+		if found != nil {
+			require.Nil(found, "got relationship: %s", tuple.MustString(found))
+		}
+		iter.Close()
+	}
+
+	// Write the initial relationships.
+	require.NoError(writeRelationships())
+
+	// Delete the relationships.
+	require.NoError(deleteRelationships())
+	confirmRelationshipsDeleted()
+
+	// Write the same relationships again.
+	require.NoError(writeRelationships())
+
+	// Delete the relationships again.
+	require.NoError(deleteRelationships())
+	confirmRelationshipsDeleted()
+}
+
 // QueryRelationshipsWithVariousFiltersTest tests various relationship filters for query relationships.
 func QueryRelationshipsWithVariousFiltersTest(t *testing.T, tester DatastoreTester) {
 	tcs := []struct {
