@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -19,6 +20,7 @@ import (
 	_ "google.golang.org/grpc/xds"
 
 	log "github.com/authzed/spicedb/internal/logging"
+	"github.com/authzed/spicedb/internal/resolver/nats"
 	"github.com/authzed/spicedb/pkg/cmd"
 	cmdutil "github.com/authzed/spicedb/pkg/cmd/server"
 	"github.com/authzed/spicedb/pkg/cmd/testserver"
@@ -31,6 +33,11 @@ var errParsing = errors.New("parsing error")
 func main() {
 	// Enable Kubernetes gRPC resolver
 	kuberesolver.RegisterInCluster()
+
+	// TODO(alecmerdler): Register a gRPC resolver which watches a NATS KV store for service addresses and use it as a gRPC resolver...
+	if err := nats.Register(context.Background()); err != nil {
+		log.Fatal().Err(err).Msg("failed to register NATS gRPC resolver")
+	}
 
 	// Enable consistent hashring gRPC load balancer
 	balancer.Register(cmdutil.ConsistentHashringBuilder)

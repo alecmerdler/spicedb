@@ -114,6 +114,7 @@ require (
 	github.com/gosimple/slug v1.14.0
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/maypok86/otter v1.2.1
+	github.com/nats-io/nats.go v1.31.0
 )
 
 require (
@@ -149,6 +150,8 @@ require (
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/lasiar/canonicalheader v1.1.1 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
+	github.com/nats-io/nkeys v0.4.6 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 // indirect
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22 // indirect
 	github.com/samber/slog-common v0.17.0 // indirect
